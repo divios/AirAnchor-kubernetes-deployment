@@ -118,14 +118,6 @@ items:
                  node app/index.js &&
                  tail -f /dev/null
 
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
-
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
             ports:
@@ -184,14 +176,6 @@ items:
             volumeMounts:
               - name: poet-shared-0
                 mountPath: "/poet-shared"
-
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-discovery-client
             image: divios/tfg-discovery-client:python-1.1
@@ -363,14 +347,6 @@ items:
                  node app/index.js &&
                  tail -f /dev/null
 
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
-
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
             ports:
@@ -418,14 +394,6 @@ items:
             volumeMounts:
               - name: poet-shared-1
                 mountPath: "/poet-shared"
-
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-discovery-client
             image: divios/tfg-discovery-client:python-1.1
@@ -597,14 +565,6 @@ items:
                  node app/index.js &&
                  tail -f /dev/null
 
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
-
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
             ports:
@@ -652,14 +612,6 @@ items:
             volumeMounts:
                 - name: poet-shared-2
                   mountPath: "/poet-shared"
-
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-discovery-client
             image: divios/tfg-discovery-client:python-1.1
@@ -831,14 +783,6 @@ items:
                  node app/index.js &&
                  tail -f /dev/null
 
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
-
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
             ports:
@@ -886,14 +830,6 @@ items:
             volumeMounts:
                 - name: poet-shared-3
                   mountPath: "/poet-shared"
-
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-discovery-client
             image: divios/tfg-discovery-client:python-1.1
@@ -1065,14 +1001,6 @@ items:
                  node app/index.js &&
                  tail -f /dev/null
 
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
-
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
             ports:
@@ -1120,14 +1048,6 @@ items:
             volumeMounts:
                 - name: poet-shared-4
                   mountPath: "/poet-shared"
-
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-discovery-client
             image: divios/tfg-discovery-client:python-1.1
