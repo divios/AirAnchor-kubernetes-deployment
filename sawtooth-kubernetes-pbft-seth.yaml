@@ -92,16 +92,11 @@ items:
               - -c
               - "seth-tp -vv -C tcp://$HOSTNAME:4004"
 
-          - name: sawtooth-seth-rpc
-            image: blockchaintp/sawtooth-seth-rpc:BTP2.1.0rc13-0.2.3p1
-            command:
-              - bash
-            args:
-              - -c
-              - "seth-rpc -vv --connect tcp://$HOSTNAME:4004 --bind 0.0.0.0:3030"
-
           - name: sawtooth-seth-cli-go
-            image: divios/sawtooth-seth-cli-go:0.2.3
+            image: divios/seth-cli-json-api:1.2
+            ports:
+              - name: rpc
+                containerPort: 3030
             command:
               - bash
             args:
@@ -120,6 +115,7 @@ items:
                  seth account import key-file.pem $HOSTNAME &&
                  seth account create --nonce=0 --wait $HOSTNAME > eth-account.txt &&
                  echo 'Created eth-account successfully' &&
+                 node app/index.js &&
                  tail -f /dev/null
 
           - name: sawtooth-smallbank-tp-rust
@@ -341,16 +337,11 @@ items:
               - -c
               - "seth-tp -vv -C tcp://$HOSTNAME:4004"
 
-          - name: sawtooth-seth-rpc
-            image: blockchaintp/sawtooth-seth-rpc:BTP2.1.0rc13-0.2.3p1
-            command:
-              - bash
-            args:
-              - -c
-              - "seth-rpc -vv --connect tcp://$HOSTNAME:4004 --bind 0.0.0.0:3030"
-
           - name: sawtooth-seth-cli-go
-            image: divios/sawtooth-seth-cli-go:0.2.3
+            image: divios/seth-cli-json-api:1.2
+            ports:
+              - name: rpc
+                containerPort: 3030
             command:
               - bash
             args:
@@ -369,6 +360,7 @@ items:
                  seth account import key-file.pem $HOSTNAME &&
                  seth account create --nonce=0 --wait $HOSTNAME > eth-account.txt &&
                  echo 'Created eth-account successfully' &&
+                 node app/index.js &&
                  tail -f /dev/null
 
           - name: sawtooth-smallbank-tp-rust
@@ -579,16 +571,11 @@ items:
               - -c
               - "seth-tp -vv -C tcp://$HOSTNAME:4004"
 
-          - name: sawtooth-seth-rpc
-            image: blockchaintp/sawtooth-seth-rpc:BTP2.1.0rc13-0.2.3p1
-            command:
-              - bash
-            args:
-              - -c
-              - "seth-rpc -vv --connect tcp://$HOSTNAME:4004 --bind 0.0.0.0:3030"
-
           - name: sawtooth-seth-cli-go
-            image: divios/sawtooth-seth-cli-go:0.2.3
+            image: divios/seth-cli-json-api:1.2
+            ports:
+              - name: rpc
+                containerPort: 3030
             command:
               - bash
             args:
@@ -607,6 +594,7 @@ items:
                  seth account import key-file.pem $HOSTNAME &&
                  seth account create --nonce=0 --wait $HOSTNAME > eth-account.txt &&
                  echo 'Created eth-account successfully' &&
+                 node app/index.js &&
                  tail -f /dev/null
 
           - name: sawtooth-smallbank-tp-rust
@@ -817,16 +805,11 @@ items:
               - -c
               - "seth-tp -vv -C tcp://$HOSTNAME:4004"
 
-          - name: sawtooth-seth-rpc
-            image: blockchaintp/sawtooth-seth-rpc:BTP2.1.0rc13-0.2.3p1
-            command:
-              - bash
-            args:
-              - -c
-              - "seth-rpc -vv --connect tcp://$HOSTNAME:4004 --bind 0.0.0.0:3030"
-
           - name: sawtooth-seth-cli-go
-            image: divios/sawtooth-seth-cli-go:0.2.3
+            image: divios/seth-cli-json-api:1.2
+            ports:
+              - name: rpc
+                containerPort: 3030
             command:
               - bash
             args:
@@ -845,6 +828,7 @@ items:
                  seth account import key-file.pem $HOSTNAME &&
                  seth account create --nonce=0 --wait $HOSTNAME > eth-account.txt &&
                  echo 'Created eth-account successfully' &&
+                 node app/index.js &&
                  tail -f /dev/null
 
           - name: sawtooth-smallbank-tp-rust
@@ -1055,16 +1039,11 @@ items:
               - -c
               - "seth-tp -vv -C tcp://$HOSTNAME:4004"
 
-          - name: sawtooth-seth-rpc
-            image: blockchaintp/sawtooth-seth-rpc:BTP2.1.0rc13-0.2.3p1
-            command:
-              - bash
-            args:
-              - -c
-              - "seth-rpc -vv --connect tcp://$HOSTNAME:4004 --bind 0.0.0.0:3030"
-
           - name: sawtooth-seth-cli-go
-            image: divios/sawtooth-seth-cli-go:0.2.3
+            image: divios/seth-cli-json-api:1.2
+            ports:
+              - name: rpc
+                containerPort: 3030
             command:
               - bash
             args:
@@ -1083,6 +1062,7 @@ items:
                  seth account import key-file.pem $HOSTNAME &&
                  seth account create --nonce=0 --wait $HOSTNAME > eth-account.txt &&
                  echo 'Created eth-account successfully' &&
+                 node app/index.js &&
                  tail -f /dev/null
 
           - name: sawtooth-smallbank-tp-rust
