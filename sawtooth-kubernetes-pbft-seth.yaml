@@ -43,6 +43,14 @@ items:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
 
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
+
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
             command:
@@ -272,6 +280,14 @@ items:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
 
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
+
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
             command:
@@ -489,6 +505,14 @@ items:
             args:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
+
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
@@ -708,6 +732,14 @@ items:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
 
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
+
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
             command:
@@ -925,6 +957,14 @@ items:
             args:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
+
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
