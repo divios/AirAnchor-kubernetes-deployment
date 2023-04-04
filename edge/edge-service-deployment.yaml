@@ -1,0 +1,49 @@
+---
+apiVersion: v1
+kind: List
+
+items:
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: discovery-server
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        tfg: discovery-server
+    template:
+      metadata:
+        labels:
+          tfg: discovery-server
+      spec:
+        containers:
+          - name: eureka-server
+            image: divios/tfg-discovery-server
+            ports:
+              - name: discovery
+                containerPort: 8761
+            env:
+              - name: eureka.server.enable-self-preservation
+                value: 'false'
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: discovery-server-service
+  spec:
+    type: LoadBalancer
+    selector:
+      tfg: discovery-server
+    ports:
+      - name: "discovery"
+        protocol: TCP
+        port: 8761
+        targetPort: discovery
+
+
+### TODO add MSP ###
+
+
+

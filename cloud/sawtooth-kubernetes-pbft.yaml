@@ -33,6 +33,7 @@ items:
       metadata:
         labels:
           name: pbft-0
+          sawtooth: node
       spec:
         containers:
           - name: sawtooth-intkey-tp-python
@@ -42,6 +43,14 @@ items:
             args:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
+
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.5.1-SNAPSHOT
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
@@ -84,14 +93,6 @@ items:
               - -c
               - "sawtooth keygen && tail -f /dev/null"
 
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
-
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
             ports:
@@ -133,6 +134,11 @@ items:
                   if [ ! -e /var/lib/sawtooth/genesis.batch ]; then
                     sawadm genesis config-genesis.batch config.batch
                   fi &&
+                  while [ ! -e /poet-shared/validator.toml ]; do
+                    echo 'Waiting for retriever' &&
+                    sleep 1
+                  done &&
+                  cp -a /poet-shared/validator.toml /etc/sawtooth &&
                   sawtooth-validator -vv \
                     --endpoint tcp://$SAWTOOTH_0_SERVICE_HOST:8800 \
                     --bind component:tcp://eth0:4004 \
@@ -142,13 +148,48 @@ items:
                     --peering static \
                     --maximum-peer-connectivity 10000
 
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
+            volumeMounts:
+              - name: poet-shared-0
+                mountPath: "/poet-shared"
+
+          - name: sawtooth-discovery-client
+            image: divios/tfg-discovery-client:python-1.1
             command:
               - bash
             args:
               - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
+              - |
+                  export HOST=$SAWTOOTH_0_SERVICE_HOST &&
+                  gunicorn app.main:app
+            env:
+              - name: PORT_EUREKA
+                value: '8800'
+              - name: APP_NAME
+                value: sawtooth-node
+              - name: REMOTE
+                value: http://discovery-server-service.edge.svc.cluster.local:8761
+
+          - name: sawtooth-discovery-retriever
+            image: divios/tfg-discovery-retriever:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - |
+                  export OWN_HOST=$SAWTOOTH_0_SERVICE_HOST &&
+                  python3 app/retriever.py &&
+                  cat /poet-shared/validator.toml &&
+                  tail -f /dev/null
+            env:
+              - name: OUTPUT_FILE
+                value: '/poet-shared/validator.toml'
+            volumeMounts:
+                - name: poet-shared-0
+                  mountPath: "/poet-shared"
+
+        volumes:
+          - name: poet-shared-0
+            emptyDir: {}
 
 - apiVersion: v1
   kind: Service
@@ -158,6 +199,7 @@ items:
     type: ClusterIP
     selector:
       name: pbft-0
+
     ports:
       - name: "4004"
         protocol: TCP
@@ -196,6 +238,7 @@ items:
       metadata:
         labels:
           name: pbft-1
+          sawtooth: node
       spec:
         containers:
           - name: sawtooth-intkey-tp-python
@@ -205,6 +248,14 @@ items:
             args:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
+
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.5.1-SNAPSHOT
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
@@ -223,7 +274,7 @@ items:
               - bash
             args:
               - -c
-              - "sawtooth-rest-api -v --connect tcp://$HOSTNAME:4004 --bind $HOSTNAME:8008"
+              - "sawtooth-rest-api -vv -C tcp://$HOSTNAME:4004 -B 0.0.0.0:8008"
             readinessProbe:
               httpGet:
                 path: /status
@@ -246,14 +297,6 @@ items:
             args:
               - -c
               - "sawtooth keygen && tail -f /dev/null"
-
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
@@ -285,6 +328,11 @@ items:
                     echo $pbft1pub > /etc/sawtooth/keys/validator.pub
                   fi &&
                   sawtooth keygen my_key &&
+                  while [ ! -e /poet-shared/validator.toml ]; do
+                    echo 'Waiting for retriever' &&
+                    sleep 1
+                  done &&
+                  cp -a /poet-shared/validator.toml /etc/sawtooth &&
                   sawtooth-validator -vv \
                     --endpoint tcp://$SAWTOOTH_1_SERVICE_HOST:8800 \
                     --bind component:tcp://eth0:4004 \
@@ -292,16 +340,51 @@ items:
                     --bind network:tcp://eth0:8800 \
                     --scheduler parallel \
                     --peering static \
-                    --maximum-peer-connectivity 10000 \
-                    --peers tcp://$SAWTOOTH_0_SERVICE_HOST:8800
+                    --maximum-peer-connectivity 10000
 
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
+            volumeMounts:
+              - name: poet-shared-1
+                mountPath: "/poet-shared"
+
+          - name: sawtooth-discovery-client
+            image: divios/tfg-discovery-client:python-1.1
             command:
               - bash
             args:
               - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
+              - |
+                  export HOST=$SAWTOOTH_1_SERVICE_HOST &&
+                  gunicorn app.main:app
+            env:
+              - name: PORT_EUREKA
+                value: '8800'
+              - name: APP_NAME
+                value: sawtooth-node
+              - name: REMOTE
+                value: http://discovery-server-service.edge.svc.cluster.local:8761
+
+          - name: sawtooth-discovery-retriever
+            image: divios/tfg-discovery-retriever:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - |
+                  export OWN_HOST=$SAWTOOTH_1_SERVICE_HOST &&
+                  python3 app/retriever.py &&
+                  cat /poet-shared/validator.toml &&
+                  tail -f /dev/null
+            env:
+              - name: OUTPUT_FILE
+                value: '/poet-shared/validator.toml'
+            volumeMounts:
+                - name: poet-shared-1
+                  mountPath: "/poet-shared"
+
+        volumes:
+          - name: poet-shared-1
+            emptyDir: {}
+
 
 - apiVersion: v1
   kind: Service
@@ -348,6 +431,7 @@ items:
       metadata:
         labels:
           name: pbft-2
+          sawtooth: node
       spec:
         containers:
           - name: sawtooth-intkey-tp-python
@@ -357,6 +441,14 @@ items:
             args:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
+
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.5.1-SNAPSHOT
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
@@ -375,7 +467,7 @@ items:
               - bash
             args:
               - -c
-              - "sawtooth-rest-api -v --connect tcp://$HOSTNAME:4004 --bind $HOSTNAME:8008"
+              - "sawtooth-rest-api -vv -C tcp://$HOSTNAME:4004 -B 0.0.0.0:8008"
             readinessProbe:
               httpGet:
                 path: /status
@@ -398,14 +490,6 @@ items:
             args:
               - -c
               - "sawtooth keygen && tail -f /dev/null"
-
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
@@ -437,6 +521,11 @@ items:
                     echo $pbft2pub > /etc/sawtooth/keys/validator.pub
                   fi &&
                   sawtooth keygen my_key &&
+                  while [ ! -e /poet-shared/validator.toml ]; do
+                    echo 'Waiting for retriever' &&
+                    sleep 1
+                  done &&
+                  cp -a /poet-shared/validator.toml /etc/sawtooth &&
                   sawtooth-validator -vv \
                     --endpoint tcp://$SAWTOOTH_2_SERVICE_HOST:8800 \
                     --bind component:tcp://eth0:4004 \
@@ -444,17 +533,50 @@ items:
                     --bind network:tcp://eth0:8800 \
                     --scheduler parallel \
                     --peering static \
-                    --maximum-peer-connectivity 10000 \
-                    --peers tcp://$SAWTOOTH_0_SERVICE_HOST:8800 \
-                    --peers tcp://$SAWTOOTH_1_SERVICE_HOST:8800
+                    --maximum-peer-connectivity 10000
 
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
+            volumeMounts:
+                - name: poet-shared-2
+                  mountPath: "/poet-shared"
+
+          - name: sawtooth-discovery-client
+            image: divios/tfg-discovery-client:python-1.1
             command:
               - bash
             args:
               - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
+              - |
+                  export HOST=$SAWTOOTH_2_SERVICE_HOST &&
+                  gunicorn app.main:app
+            env:
+              - name: PORT_EUREKA
+                value: '8800'
+              - name: APP_NAME
+                value: sawtooth-node
+              - name: REMOTE
+                value: http://discovery-server-service.edge.svc.cluster.local:8761
+
+          - name: sawtooth-discovery-retriever
+            image: divios/tfg-discovery-retriever:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - |
+                  export OWN_HOST=$SAWTOOTH_2_SERVICE_HOST &&
+                  python3 app/retriever.py &&
+                  cat /poet-shared/validator.toml &&
+                  tail -f /dev/null
+            env:
+              - name: OUTPUT_FILE
+                value: '/poet-shared/validator.toml'
+            volumeMounts:
+                - name: poet-shared-2
+                  mountPath: "/poet-shared"
+
+        volumes:
+          - name: poet-shared-2
+            emptyDir: {}
 
 - apiVersion: v1
   kind: Service
@@ -502,6 +624,7 @@ items:
       metadata:
         labels:
           name: pbft-3
+          sawtooth: node
       spec:
         containers:
           - name: sawtooth-intkey-tp-python
@@ -511,6 +634,14 @@ items:
             args:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
+
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.5.1-SNAPSHOT
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
@@ -553,14 +684,6 @@ items:
               - -c
               - "sawtooth keygen && tail -f /dev/null"
 
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
-
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
             ports:
@@ -591,6 +714,11 @@ items:
                     echo $pbft3pub > /etc/sawtooth/keys/validator.pub
                   fi &&
                   sawtooth keygen my_key &&
+                  while [ ! -e /poet-shared/validator.toml ]; do
+                    echo 'Waiting for retriever' &&
+                    sleep 1
+                  done &&
+                  cp -a /poet-shared/validator.toml /etc/sawtooth &&
                   sawtooth-validator -vv \
                     --endpoint tcp://$SAWTOOTH_3_SERVICE_HOST:8800 \
                     --bind component:tcp://eth0:4004 \
@@ -598,18 +726,50 @@ items:
                     --bind network:tcp://eth0:8800 \
                     --scheduler parallel \
                     --peering static \
-                    --maximum-peer-connectivity 10000 \
-                    --peers tcp://$SAWTOOTH_0_SERVICE_HOST:8800 \
-                    --peers tcp://$SAWTOOTH_1_SERVICE_HOST:8800 \
-                    --peers tcp://$SAWTOOTH_2_SERVICE_HOST:8800
+                    --maximum-peer-connectivity 10000
 
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
+            volumeMounts:
+                - name: poet-shared-3
+                  mountPath: "/poet-shared"
+
+          - name: sawtooth-discovery-client
+            image: divios/tfg-discovery-client:python-1.1
             command:
               - bash
             args:
               - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
+              - |
+                  export HOST=$SAWTOOTH_3_SERVICE_HOST &&
+                  gunicorn app.main:app
+            env:
+              - name: PORT_EUREKA
+                value: '8800'
+              - name: APP_NAME
+                value: sawtooth-node
+              - name: REMOTE
+                value: http://discovery-server-service.edge.svc.cluster.local:8761
+
+          - name: sawtooth-discovery-retriever
+            image: divios/tfg-discovery-retriever:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - |
+                  export OWN_HOST=$SAWTOOTH_3_SERVICE_HOST &&
+                  python3 app/retriever.py &&
+                  cat /poet-shared/validator.toml &&
+                  tail -f /dev/null
+            env:
+              - name: OUTPUT_FILE
+                value: '/poet-shared/validator.toml'
+            volumeMounts:
+                - name: poet-shared-3
+                  mountPath: "/poet-shared"
+
+        volumes:
+          - name: poet-shared-3
+            emptyDir: {}
 
 - apiVersion: v1
   kind: Service
@@ -657,6 +817,7 @@ items:
       metadata:
         labels:
           name: pbft-4
+          sawtooth: node
       spec:
         containers:
           - name: sawtooth-intkey-tp-python
@@ -666,6 +827,14 @@ items:
             args:
               - -c
               - "intkey-tp-python -vv -C tcp://$HOSTNAME:4004"
+
+          - name: sawtooth-drons-tp-python
+            image: divios/dron-tp:1.5.1-SNAPSHOT
+            command:
+              - bash
+            args:
+              - -c
+              - "location-tp -vv -C tcp://$HOSTNAME:4004"
 
           - name: sawtooth-pbft-engine
             image: blockchaintp/sawtooth-pbft-engine:BTP2.1.0
@@ -708,14 +877,6 @@ items:
               - -c
               - "sawtooth keygen && tail -f /dev/null"
 
-          - name: sawtooth-smallbank-tp-rust
-            image: hyperledger/sawtooth-smallbank-tp-rust:nightly
-            command:
-              - bash
-            args:
-              - -c
-              - "smallbank-tp-rust -vv -C tcp://$HOSTNAME:4004"
-
           - name: sawtooth-validator
             image: blockchaintp/sawtooth-validator:BTP2.1.0
             ports:
@@ -746,6 +907,11 @@ items:
                     echo $pbft4pub > /etc/sawtooth/keys/validator.pub
                   fi &&
                   sawtooth keygen my_key &&
+                  while [ ! -e /poet-shared/validator.toml ]; do
+                    echo 'Waiting for retriever' &&
+                    sleep 1
+                  done &&
+                  cp -a /poet-shared/validator.toml /etc/sawtooth &&
                   sawtooth-validator -vv \
                     --endpoint tcp://$SAWTOOTH_4_SERVICE_HOST:8800 \
                     --bind component:tcp://eth0:4004 \
@@ -753,19 +919,50 @@ items:
                     --bind network:tcp://eth0:8800 \
                     --scheduler parallel \
                     --peering static \
-                    --maximum-peer-connectivity 10000 \
-                    --peers tcp://$SAWTOOTH_0_SERVICE_HOST:8800 \
-                    --peers tcp://$SAWTOOTH_1_SERVICE_HOST:8800 \
-                    --peers tcp://$SAWTOOTH_2_SERVICE_HOST:8800 \
-                    --peers tcp://$SAWTOOTH_3_SERVICE_HOST:8800
+                    --maximum-peer-connectivity 10000
 
-          - name: sawtooth-xo-tp-python
-            image: hyperledger/sawtooth-xo-tp-python:nightly
+            volumeMounts:
+                - name: poet-shared-4
+                  mountPath: "/poet-shared"
+
+          - name: sawtooth-discovery-client
+            image: divios/tfg-discovery-client:python-1.1
             command:
               - bash
             args:
               - -c
-              - "xo-tp-python -vv -C tcp://$HOSTNAME:4004"
+              - |
+                  export HOST=$SAWTOOTH_4_SERVICE_HOST &&
+                  gunicorn app.main:app
+            env:
+              - name: PORT_EUREKA
+                value: '8800'
+              - name: APP_NAME
+                value: sawtooth-node
+              - name: REMOTE
+                value: http://discovery-server-service.edge.svc.cluster.local:8761
+
+          - name: sawtooth-discovery-retriever
+            image: divios/tfg-discovery-retriever:1.1
+            command:
+              - bash
+            args:
+              - -c
+              - |
+                  export OWN_HOST=$SAWTOOTH_4_SERVICE_HOST &&
+                  python3 app/retriever.py &&
+                  cat /poet-shared/validator.toml &&
+                  tail -f /dev/null
+            env:
+              - name: OUTPUT_FILE
+                value: '/poet-shared/validator.toml'
+            volumeMounts:
+                - name: poet-shared-4
+                  mountPath: "/poet-shared"
+
+        volumes:
+          - name: poet-shared-4
+            emptyDir: {}
 
 - apiVersion: v1
   kind: Service

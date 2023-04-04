@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: List
+
+items:
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: dron
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        tfg: dron
+    template:
+      metadata:
+        labels:
+          tfg: dron
+      spec:
+        containers:
+          - name: dron
+            image: divios/dron-api:1.0-SNAPSHOT
+            command:
+              - python api/app.py
