@@ -4,6 +4,8 @@ kind: List
 
 items:
 
+### Eureka ###
+
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -37,13 +39,104 @@ items:
     selector:
       tfg: discovery-server
     ports:
-      - name: "discovery"
-        protocol: TCP
+      - name: discovery
         port: 8761
         targetPort: discovery
 
 
-### TODO add MSP ###
+### Gateway ###
 
 
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: air-anchor-gateway
+  spec:
+    replicas: 4
+    selector:
+      matchLabels:
+        tfg: air-anchor-gateway
+    template:
+      metadata:
+        labels:
+          tfg: air-anchor-gateway
+      spec:
+        containers:
+          - name: eureka-server
+            image: divios/air-anchor-gateway:1.2.3-SNAPSHOT
+            ports:
+              - name: gateway
+                containerPort: 8593
+            env:
+              - name: SAWTOOTH_REST_API_URL
+                value: '192.168.1.169:8085'
+              - name: 'CA_API_URL'
+                value: '192.168.1.169:8180'
+            command:
+              - bash
+            args:
+              - -c 
+              - |
+                  echo "edd7ea10471517dcc5861eb0bedb2182e7a97647f6911fa9b00a414e46670090" > priv-key &&
+                  uvicorn app.main:app --host 0.0.0.0 --port 8593
 
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: air-anchor-gateway-service
+  spec:
+    type: LoadBalancer
+    selector:
+      tfg: air-anchor-gateway
+    ports:
+      - name: gateway
+        port: 8593
+        targetPort: gateway
+
+
+### CA ###
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: air-anchor-ca
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        tfg: air-anchor-ca
+    template:
+      metadata:
+        labels:
+          tfg: air-anchor-ca
+      spec:
+        containers:
+          - name: eureka-server
+            image: divios/air-anchor-ca:1.1-SNAPSHOT
+            ports:
+              - name: ca
+                containerPort: 8180
+            env:
+              - name: SAWTOOTH_REST_API_URL
+                value: 'AIR_ANCHOR_GATEWAY_SERVICE_SERVICE_HOST'
+            command:
+              - bash
+            args:
+              - -c 
+              - |
+                  touch authorized_keys.txt &&
+                  echo "dd15ccf27ad6459bd63a38b0b1ee6fe10cbbb24382bba8c513c161b4b3e94abb" > priv-key-hex &&
+                  uvicorn app.app:app --host 0.0.0.0 --port 8180
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: air-anchor-ca-service
+  spec:
+    type: LoadBalancer
+    selector:
+      tfg: air-anchor-ca
+    ports:
+      - name: ca
+        port: 8180
+        targetPort: ca

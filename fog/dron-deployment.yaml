@@ -20,6 +20,12 @@ items:
       spec:
         containers:
           - name: dron
-            image: divios/dron-api:1.0-SNAPSHOT
+            image: divios/air-anchor-api:1.1.2-SNAPSHOT
             command:
-              - python api/app.py
+              - bash
+            args:
+              - -c 
+              - |
+                  echo "87079264a7f5c5999dddedffd83dbc6b1653a308288a89aac5805420a371f7f0" > priv-key && 
+                  tail -f /dev/null
+
